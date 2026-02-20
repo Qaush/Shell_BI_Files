@@ -8,6 +8,7 @@ Aplikacion Windows Forms në C# për ekzekutimin e raportit **CR Product file** 
 - Query është vendosur fikse sipas kërkesës dhe respekton renditjen e 23 kolonave të detyrueshme.
 - Në rezultat kthehet kolona `Line` (header + data rows në format CSV me `;`).
 - Ka buton eksporti që ruan file UTF-8 me emër automatik sipas formatit `CRProducts_SSC_BDS_XK_999999_YYYYMMDDThhmmss.csv`.
+- Specifikimi i plotë i kolonave CRProducts ruhet në `CRProducts_RSTS_Spec.md`.
 
 ## Connection string
 

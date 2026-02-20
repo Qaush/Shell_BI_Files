@@ -22,9 +22,9 @@ internal static class ReportCatalog
                ========================================================= */
 
             DECLARE @BUID INT = 1000101;
-            DECLARE @BUCODE NVARCHAR(50) = N'KOSOVO TMLA';
+            DECLARE @BUCODE NVARCHAR(50) = N'XK - TMLA';
             DECLARE @ORGUNITOWNERID INT = 1000101;
-            DECLARE @ORGUNITOWNERNAME NVARCHAR(50) = N'KOSOVO TMLA';
+            DECLARE @ORGUNITOWNERNAME NVARCHAR(50) = N'XK - TMLA';
 
             ;WITH P AS
             (
