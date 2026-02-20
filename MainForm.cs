@@ -5,31 +5,51 @@ namespace ShellNotesApp;
 
 public sealed class MainForm : Form
 {
-    private const string ConnectionString = "Data Source=192.168.0.250,20343;Initial Catalog=SHELL;User Id=Kubit;Password=@KIKi34345#$@;";
-
     private readonly DataGridView _notesGrid;
     private readonly Button _loadButton;
-    private readonly TextBox _queryTextBox;
     private readonly Label _statusLabel;
 
     public MainForm()
     {
-        Text = "Shell - Shenime nga Databaza";
-        Width = 1000;
-        Height = 640;
+        Text = $"Shell - {ReportDefinition.ReportName}";
+        Width = 1200;
+        Height = 780;
         StartPosition = FormStartPosition.CenterScreen;
 
-        _queryTextBox = new TextBox
+        var reportNameLabel = new Label
         {
             Dock = DockStyle.Top,
             Height = 34,
-            Font = new Font("Segoe UI", 10f),
-            Text = "SELECT TOP (100) * FROM Shenime ORDER BY Id DESC"
+            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+            Text = $"Raporti: {ReportDefinition.ReportName}",
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(8, 0, 0, 0)
+        };
+
+        var instructionLabel = new Label
+        {
+            Dock = DockStyle.Top,
+            Height = 56,
+            Font = new Font("Segoe UI", 9f),
+            ForeColor = Color.DimGray,
+            Text = ReportDefinition.Instructions,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(8, 0, 8, 0)
+        };
+
+        var queryBox = new RichTextBox
+        {
+            Dock = DockStyle.Top,
+            Height = 220,
+            Font = new Font("Consolas", 9f),
+            ReadOnly = true,
+            WordWrap = false,
+            Text = ReportDefinition.Query
         };
 
         _loadButton = new Button
         {
-            Text = "Ngarko Shenimet",
+            Text = "Ngarko raportin CR Product file",
             Dock = DockStyle.Top,
             Height = 42,
             Font = new Font("Segoe UI", 10f, FontStyle.Bold)
@@ -43,7 +63,7 @@ public sealed class MainForm : Form
             TextAlign = ContentAlignment.MiddleLeft,
             Font = new Font("Segoe UI", 9f),
             ForeColor = Color.DimGray,
-            Text = "Gati. Kliko \"Ngarko Shenimet\" për të lexuar të dhënat nga SQL Server."
+            Text = "Gati. Kliko butonin për të ekzekutuar query-n e raportit."
         };
 
         _notesGrid = new DataGridView
@@ -60,22 +80,23 @@ public sealed class MainForm : Form
         Controls.Add(_notesGrid);
         Controls.Add(_statusLabel);
         Controls.Add(_loadButton);
-        Controls.Add(_queryTextBox);
+        Controls.Add(queryBox);
+        Controls.Add(instructionLabel);
+        Controls.Add(reportNameLabel);
     }
 
     private async Task LoadNotesAsync()
     {
         _loadButton.Enabled = false;
-        _statusLabel.Text = "Duke ngarkuar shënimet...";
+        _statusLabel.Text = "Duke ngarkuar të dhënat e raportit...";
 
         try
         {
-            var query = string.IsNullOrWhiteSpace(_queryTextBox.Text)
-                ? "SELECT TOP (100) * FROM Shenime"
-                : _queryTextBox.Text;
-
-            using var connection = new SqlConnection(ConnectionString);
-            using var command = new SqlCommand(query, connection);
+            using var connection = new SqlConnection(ReportDefinition.ConnectionString);
+            using var command = new SqlCommand(ReportDefinition.Query, connection)
+            {
+                CommandTimeout = 180
+            };
             using var adapter = new SqlDataAdapter(command);
 
             var table = new DataTable();
@@ -84,13 +105,13 @@ public sealed class MainForm : Form
             adapter.Fill(table);
 
             _notesGrid.DataSource = table;
-            _statusLabel.Text = $"U ngarkuan {table.Rows.Count} rreshta.";
+            _statusLabel.Text = $"Raporti u ngarkua me sukses. Rreshta: {table.Rows.Count}.";
         }
         catch (Exception ex)
         {
-            _statusLabel.Text = "Dështoi ngarkimi i të dhënave.";
+            _statusLabel.Text = "Dështoi ekzekutimi i raportit.";
             MessageBox.Show(
-                $"Ndodhi një gabim gjatë leximit të databazës:\n{ex.Message}",
+                $"Ndodhi një gabim gjatë leximit nga databaza:\n{ex.Message}",
                 "Gabim",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);

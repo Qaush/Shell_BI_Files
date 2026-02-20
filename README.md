@@ -1,10 +1,14 @@
 # Shell Notes App (Windows Forms, .NET 10)
 
-Aplikacion i thjeshtë Windows Forms në C# për të lexuar shënime nga databaza `SHELL` dhe për t'i shfaqur në `DataGridView`.
+Aplikacion Windows Forms në C# për ekzekutimin e raportit **CR Product file** dhe shfaqjen e rezultateve në `DataGridView`.
+
+## Raporti
+
+- **Emri i raportit:** `CR Product file`
+- Query është vendosur fikse sipas kërkesës dhe respekton renditjen e 23 kolonave të detyrueshme.
+- Në rezultat kthehet kolona `Line` (header + data rows në format CSV me `;`).
 
 ## Connection string
-
-Aplikacioni përdor këtë connection string:
 
 ```txt
 Data Source=192.168.0.250,20343;Initial Catalog=SHELL;User Id=Kubit;Password=@KIKi34345#$@;
@@ -12,8 +16,8 @@ Data Source=192.168.0.250,20343;Initial Catalog=SHELL;User Id=Kubit;Password=@KI
 
 ## Kërkesat
 
-- .NET 10 SDK (preview ose version final kur të dalë)
-- Windows OS (për Windows Forms)
+- .NET 10 SDK
+- Windows OS (Windows Forms)
 
 ## Nisja
 
@@ -22,6 +26,8 @@ dotnet restore
 dotnet run
 ```
 
-Në formën kryesore:
-- Mund të ndryshosh SQL query në textbox-in sipër.
-- Kliko **Ngarko Shenimet** për të lexuar të dhënat dhe për t’i shfaqur në grid.
+## Çfarë bën forma kryesore
+
+- Shfaq emrin e raportit dhe instruksionin e fushave.
+- Shfaq query-n SQL (read-only).
+- Butoni **Ngarko raportin CR Product file** e ekzekuton query-n dhe i shfaq rezultatet në grid.
