@@ -10,7 +10,7 @@ internal static class ReportCatalog
     [
         new(
             "CR Product file",
-            "Raporti duhet të ndjekë renditjen e detyrueshme me 23 kolona: " +
+            "Raporti duhet të dorëzohet sipas RSTS: emri i file-it CRProducts_SSC_BDS_XK_999999_YYYYMMDDThhmmss.csv, UTF-8, delimiter ';', pa kolona bosh dhe me 23 kolona të detyrueshme: " +
             "BUID, BUCODE, INVENTORYITEMID, EXTERNALID, ITEMNAME, ITEMSTATUS, ORGUNITOWNERID, ORGUNITOWNERNAME, " +
             "PRODUCTOWNERSHIP, PRODUCTSELLINGTYPE, LOCALSUBCATEGORYID, LOCALSUBCATEGORYCODE, LOCALSUBCATEGORYNAME, " +
             "TAXID, TAXNAME, TAXPERCENT, MANUFACTURERID, MANUFACTURERCODE, MANUFACTURERNAME, BUSINESSUNITGRPID, " +
@@ -22,9 +22,9 @@ internal static class ReportCatalog
                ========================================================= */
 
             DECLARE @BUID INT = 1000101;
-            DECLARE @BUCODE NVARCHAR(50) = N'XK - TMLA';
+            DECLARE @BUCODE NVARCHAR(50) = N'KOSOVO TMLA';
             DECLARE @ORGUNITOWNERID INT = 1000101;
-            DECLARE @ORGUNITOWNERNAME NVARCHAR(50) = N'XK - TMLA';
+            DECLARE @ORGUNITOWNERNAME NVARCHAR(50) = N'KOSOVO TMLA';
 
             ;WITH P AS
             (
@@ -39,22 +39,22 @@ internal static class ReportCatalog
                     END AS ITEMSTATUS,
 
                     'Central' AS PRODUCTOWNERSHIP,
-                    '' AS PRODUCTSELLINGTYPE,
+                    'g' AS PRODUCTSELLINGTYPE,
 
                     ISNULL(gs.Id, -2) AS LOCALSUBCATEGORYID,
                     ISNULL(gs.Shifra, '-2') AS LOCALSUBCATEGORYCODE,
                     ISNULL(gs.Pershkrimi, 'Unknown') AS LOCALSUBCATEGORYNAME,
 
                     t.Id AS TAXID,
-                    t.Pershkrimi AS TAXNAME,
+                    ISNULL(t.Pershkrimi, 'UNKNOWN') AS TAXNAME,
                     CAST(t.Vlera AS DECIMAL(12,4)) AS TAXPERCENT,
 
                     0 AS MANUFACTURERID,
-                    '' AS MANUFACTURERCODE,
-                    '' AS MANUFACTURERNAME,
+                    'NA' AS MANUFACTURERCODE,
+                    'N/A' AS MANUFACTURERNAME,
 
                     0 AS BUSINESSUNITGRPID,
-                    '' AS BUSINESSUNITGRPNAME,
+                    'KOSOVO TMLA' AS BUSINESSUNITGRPNAME,
 
                     ISNULL(b.Id, 0) AS BRANDCODE,
                     ISNULL(b.Pershkrimi, '') AS BRANDNAME
