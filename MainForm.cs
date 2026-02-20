@@ -6,65 +6,29 @@ namespace ShellNotesApp;
 public sealed class MainForm : Form
 {
     private readonly DataGridView _notesGrid;
-    private readonly Button _loadButton;
     private readonly Label _statusLabel;
+    private readonly Label _reportTitleLabel;
+    private readonly Label _instructionLabel;
+
+    private ReportDefinition? _selectedReport;
+    private Button? _activeReportButton;
 
     public MainForm()
     {
-        Text = $"Shell - {ReportDefinition.ReportName}";
-        Width = 1200;
+        Text = "Shell Reports";
+        Width = 1300;
         Height = 780;
         StartPosition = FormStartPosition.CenterScreen;
 
-        var reportNameLabel = new Label
+        var root = new TableLayoutPanel
         {
-            Dock = DockStyle.Top,
-            Height = 34,
-            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
-            Text = $"Raporti: {ReportDefinition.ReportName}",
-            TextAlign = ContentAlignment.MiddleLeft,
-            Padding = new Padding(8, 0, 0, 0)
+            Dock = DockStyle.Fill,
+            ColumnCount = 2
         };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 340));
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        var instructionLabel = new Label
-        {
-            Dock = DockStyle.Top,
-            Height = 56,
-            Font = new Font("Segoe UI", 9f),
-            ForeColor = Color.DimGray,
-            Text = ReportDefinition.Instructions,
-            TextAlign = ContentAlignment.MiddleLeft,
-            Padding = new Padding(8, 0, 8, 0)
-        };
-
-        var queryBox = new RichTextBox
-        {
-            Dock = DockStyle.Top,
-            Height = 220,
-            Font = new Font("Consolas", 9f),
-            ReadOnly = true,
-            WordWrap = false,
-            Text = ReportDefinition.Query
-        };
-
-        _loadButton = new Button
-        {
-            Text = "Ngarko raportin CR Product file",
-            Dock = DockStyle.Top,
-            Height = 42,
-            Font = new Font("Segoe UI", 10f, FontStyle.Bold)
-        };
-        _loadButton.Click += async (_, _) => await LoadNotesAsync();
-
-        _statusLabel = new Label
-        {
-            Dock = DockStyle.Top,
-            Height = 28,
-            TextAlign = ContentAlignment.MiddleLeft,
-            Font = new Font("Segoe UI", 9f),
-            ForeColor = Color.DimGray,
-            Text = "Gati. Kliko butonin për të ekzekutuar query-n e raportit."
-        };
+        var leftPanel = BuildLeftPanel();
 
         _notesGrid = new DataGridView
         {
@@ -77,23 +41,132 @@ public sealed class MainForm : Form
             MultiSelect = false
         };
 
-        Controls.Add(_notesGrid);
-        Controls.Add(_statusLabel);
-        Controls.Add(_loadButton);
-        Controls.Add(queryBox);
-        Controls.Add(instructionLabel);
-        Controls.Add(reportNameLabel);
+        root.Controls.Add(leftPanel, 0, 0);
+        root.Controls.Add(_notesGrid, 1, 0);
+
+        Controls.Add(root);
+
+        if (ReportCatalog.Reports.Count > 0)
+        {
+            SelectReport(ReportCatalog.Reports[0], null);
+        }
     }
 
-    private async Task LoadNotesAsync()
+    private Control BuildLeftPanel()
     {
-        _loadButton.Enabled = false;
-        _statusLabel.Text = "Duke ngarkuar të dhënat e raportit...";
+        var container = new Panel { Dock = DockStyle.Fill, Padding = new Padding(8) };
+
+        var reportsLabel = new Label
+        {
+            Dock = DockStyle.Top,
+            Height = 30,
+            Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+            Text = "Raportet",
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+
+        var reportsButtonsPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 240,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoScroll = true,
+            Padding = new Padding(0, 4, 0, 4)
+        };
+
+        foreach (var report in ReportCatalog.Reports)
+        {
+            var reportButton = new Button
+            {
+                Width = 300,
+                Height = 40,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                Text = report.ReportName,
+                Tag = report
+            };
+
+            reportButton.Click += async (_, _) =>
+            {
+                SelectReport(report, reportButton);
+                await LoadReportAsync();
+            };
+
+            reportsButtonsPanel.Controls.Add(reportButton);
+        }
+
+        _reportTitleLabel = new Label
+        {
+            Dock = DockStyle.Top,
+            Height = 34,
+            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(0, 4, 0, 0)
+        };
+
+        _instructionLabel = new Label
+        {
+            Dock = DockStyle.Top,
+            Height = 140,
+            Font = new Font("Segoe UI", 9f),
+            ForeColor = Color.DimGray,
+            TextAlign = ContentAlignment.TopLeft
+        };
+
+        _statusLabel = new Label
+        {
+            Dock = DockStyle.Top,
+            Height = 50,
+            TextAlign = ContentAlignment.TopLeft,
+            Font = new Font("Segoe UI", 9f),
+            ForeColor = Color.DimGray,
+            Text = "Zgjidh një raport nga lista dhe kliko butonin përkatës."
+        };
+
+        container.Controls.Add(_statusLabel);
+        container.Controls.Add(_instructionLabel);
+        container.Controls.Add(_reportTitleLabel);
+        container.Controls.Add(reportsButtonsPanel);
+        container.Controls.Add(reportsLabel);
+
+        return container;
+    }
+
+    private void SelectReport(ReportDefinition report, Button? button)
+    {
+        _selectedReport = report;
+        _reportTitleLabel.Text = $"Raporti aktiv: {report.ReportName}";
+        _instructionLabel.Text = report.Instructions;
+
+        if (_activeReportButton is not null)
+        {
+            _activeReportButton.BackColor = SystemColors.Control;
+            _activeReportButton.ForeColor = SystemColors.ControlText;
+        }
+
+        if (button is not null)
+        {
+            _activeReportButton = button;
+            _activeReportButton.BackColor = Color.FromArgb(29, 78, 216);
+            _activeReportButton.ForeColor = Color.White;
+        }
+    }
+
+    private async Task LoadReportAsync()
+    {
+        if (_selectedReport is null)
+        {
+            _statusLabel.Text = "Nuk është zgjedhur asnjë raport.";
+            return;
+        }
+
+        SetReportButtonsEnabled(false);
+        _statusLabel.Text = $"Duke ngarkuar: {_selectedReport.ReportName}...";
 
         try
         {
-            using var connection = new SqlConnection(ReportDefinition.ConnectionString);
-            using var command = new SqlCommand(ReportDefinition.Query, connection)
+            using var connection = new SqlConnection(ReportCatalog.ConnectionString);
+            using var command = new SqlCommand(_selectedReport.Query, connection)
             {
                 CommandTimeout = 0
             };
@@ -118,7 +191,31 @@ public sealed class MainForm : Form
         }
         finally
         {
-            _loadButton.Enabled = true;
+            SetReportButtonsEnabled(true);
+        }
+    }
+
+    private void SetReportButtonsEnabled(bool enabled)
+    {
+        foreach (Control control in Controls)
+        {
+            ToggleButtons(control, enabled);
+        }
+    }
+
+    private static void ToggleButtons(Control parent, bool enabled)
+    {
+        foreach (Control control in parent.Controls)
+        {
+            if (control is Button button)
+            {
+                button.Enabled = enabled;
+            }
+
+            if (control.HasChildren)
+            {
+                ToggleButtons(control, enabled);
+            }
         }
     }
 }
