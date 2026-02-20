@@ -6,9 +6,9 @@ namespace ShellNotesApp;
 public sealed class MainForm : Form
 {
     private readonly DataGridView _notesGrid;
-    private readonly Label _statusLabel;
-    private readonly Label _reportTitleLabel;
-    private readonly Label _instructionLabel;
+    private Label _statusLabel = null!;
+    private Label _reportTitleLabel = null!;
+    private Label _instructionLabel = null!;
 
     private ReportDefinition? _selectedReport;
     private Button? _activeReportButton;
