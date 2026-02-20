@@ -20,9 +20,11 @@ internal static class CrProductsExport
             .Select(static line => line?.TrimEnd('\r', '\n') ?? string.Empty)
             .ToList();
 
-        Validate(normalizedLines);
+        var sanitizedLines = SanitizeLines(normalizedLines);
 
-        File.WriteAllLines(path, normalizedLines, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        Validate(sanitizedLines);
+
+        File.WriteAllLines(path, sanitizedLines, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
     private static void Validate(IReadOnlyList<string> lines)
@@ -88,6 +90,49 @@ internal static class CrProductsExport
         }
     }
 
+
+    private static List<string> SanitizeLines(IReadOnlyList<string> lines)
+    {
+        if (lines.Count == 0)
+        {
+            return [];
+        }
+
+        var result = new List<string>(lines.Count) { lines[0] };
+
+        // Fushat përshkruese ku nuk lejohet të mbetet ';' brenda vlerës.
+        var descriptionIndexes = new HashSet<int> { 4, 12, 14, 18, 20, 22 };
+        var quotedIndexes = new HashSet<int> { 1, 3, 4, 7, 8, 9, 11, 12, 14, 17, 18, 20, 22 };
+
+        for (var i = 1; i < lines.Count; i++)
+        {
+            var columns = SplitSemicolonCsvLine(lines[i]);
+            if (columns.Count != 23)
+            {
+                result.Add(lines[i]);
+                continue;
+            }
+
+            for (var c = 0; c < columns.Count; c++)
+            {
+                var value = Unquote(columns[c]);
+
+                if (descriptionIndexes.Contains(c))
+                {
+                    value = value.Replace(";", string.Empty, StringComparison.Ordinal);
+                }
+
+                columns[c] = quotedIndexes.Contains(c)
+                    ? Quote(value)
+                    : value;
+            }
+
+            result.Add(string.Join(";", columns));
+        }
+
+        return result;
+    }
+
     private static List<string> SplitSemicolonCsvLine(string line)
     {
         var parts = new List<string>();
@@ -127,6 +172,10 @@ internal static class CrProductsExport
         parts.Add(current.ToString());
         return parts;
     }
+
+
+    private static string Quote(string value)
+        => $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
 
     private static string Unquote(string value)
     {
