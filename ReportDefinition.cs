@@ -1,6 +1,17 @@
 namespace ShellNotesApp;
 
-internal sealed record ReportDefinition(string ReportName, string Instructions, string Query);
+internal enum ExportKind
+{
+    CsvLines,
+    DataTableSemicolon
+}
+
+internal sealed record ReportDefinition(
+    string ReportName,
+    string Instructions,
+    string Query,
+    Func<DateTime, string> BuildFileName,
+    ExportKind ExportKind);
 
 internal static class ReportCatalog
 {
@@ -101,6 +112,104 @@ internal static class ReportCatalog
                 FROM P
             ) X
             ORDER BY CASE WHEN Line LIKE 'BUID;BUCODE%' THEN 0 ELSE 1 END;
-            """)
+            """,
+            CrProductsExport.BuildFileName,
+            ExportKind.CsvLines),
+        new(
+            "CR Retail Pack",
+            "Raporti duhet të dorëzohet sipas renditjes së detyrueshme me 28 kolona. Emri i file-it duhet të jetë CRRetailPacks_QBS_XK_999999_YYYY-MM-DD-hh-mm-ss.csv, BUSINESS_UNIT_CODE duhet të jetë KOSOVO - TMLA, dhe RETAIL_PACK_NAME duhet të jetë i njëjtë me PRODUCT_RECEIPT_TEXT.",
+            """
+            /* =========================================================
+               CR RETAIL PACK FILE – RSTS Kosovo
+               28 Columns – Exact Mandatory Sequence
+               ========================================================= */
+
+            DECLARE @BUID INT = 1000101;
+            DECLARE @BUCODE NVARCHAR(50) = N'KOSOVO - TMLA';
+            DECLARE @Today DATE = CAST(GETDATE() AS DATE);
+
+            ;WITH P AS
+            (
+                SELECT
+                    a.Id AS INVENTORYITEMID,
+                    ISNULL(a.Shifra,'') AS EXTERNALID,
+                    ISNULL(a.Pershkrimi,'') AS ITEMNAME,
+                    ISNULL(a.Pershkrimi,'') AS PRODUCT_RECEIPT_TEXT,
+
+                    n.Njesia AS BASE_UNIT_OF_MEASURE,
+
+                    a.Id AS RMI_ID,
+                    a.Shifra AS RMI_EXTERNAL_ID,
+                    a.Pershkrimi AS RMI_NAME,
+
+                    a.Id AS RETAIL_PACK_ID,
+                    ISNULL(a.Pershkrimi,'') AS RETAIL_PACK_NAME,
+                    '' AS RETAIL_PACK_SIZE,
+
+                    0 AS CONTAINER_FEE_RETAIL,
+                    '' AS CONTAINER_FEE_NAME,
+
+                    -- Barcode
+                    b.Barkodi AS RETAIL_ITEM_BARCODE,
+
+                    CASE
+                        WHEN LEN(b.Barkodi) = 13 THEN 'EAN13'
+                        WHEN LEN(b.Barkodi) = 12 THEN 'EAN12'
+                        WHEN LEN(b.Barkodi) = 8 THEN 'EAN8'
+                        ELSE 'Primary'
+                    END AS RETAIL_TYPE,
+
+                    c.QmimiIShitjes AS RECOMMENDED_RETAIL_PRICE,
+                    c.QmimiIShitjes AS MAXIMUM_RETAIL_PRICE,
+
+                    t.Id AS TAX_CODE,
+                    t.Pershkrimi AS TAX_NAME,
+                    CAST(t.Vlera AS DECIMAL(6,2)) AS TAX_PERCENT
+
+                FROM dbo.Artikujt a
+                INNER JOIN dbo.Njesit n ON n.Id = a.NjesiaID
+                INNER JOIN dbo.Cmimorja c ON c.ArtikulliId = a.Id AND c.OrganizataId = 188
+                LEFT JOIN dbo.Tatimet t ON t.Id = a.TatimetID
+                OUTER APPLY
+                (
+                    SELECT TOP 1 Barkodi
+                    FROM dbo.Barkodat
+                    WHERE ArtikulliId = a.Id
+                ) b
+            )
+
+            SELECT
+                @BUID AS BUSINESS_UNIT_ID,
+                @BUCODE AS BUSINESS_UNIT_CODE,
+                RMI_ID,
+                RMI_EXTERNAL_ID,
+                RMI_NAME,
+                PRODUCT_RECEIPT_TEXT,
+                BASE_UNIT_OF_MEASURE,
+                INVENTORYITEMID AS INVENTORY_ITEM_ID,
+                '1' AS RETAIL_LEVEL_ID,
+                'Default' AS RETAIL_LEVEL_NAME,
+                RETAIL_PACK_ID,
+                RETAIL_PACK_NAME,
+                RETAIL_PACK_SIZE,
+                CONTAINER_FEE_NAME,
+                CAST(CONTAINER_FEE_RETAIL AS DECIMAL(12,2)) AS CONTAINER_FEE_RETAIL,
+                0 AS BARCODE_ID,
+                RETAIL_ITEM_BARCODE,
+                RETAIL_TYPE,
+                @Today AS PRICE_FROM_DATE,
+                '9999-12-31' AS PRICE_TO_DATE,
+                CAST(RECOMMENDED_RETAIL_PRICE AS DECIMAL(12,2)) AS RECOMMENDED_RETAIL_PRICE,
+                CAST(MAXIMUM_RETAIL_PRICE AS DECIMAL(12,2)) AS MAXIMUM_RETAIL_PRICE,
+                ISNULL(TAX_CODE,0) AS TAX_CODE,
+                ISNULL(TAX_NAME,'') AS TAX_NAME,
+                ISNULL(TAX_PERCENT,0) AS TAX_PERCENT,
+                CONVERT(INT, FORMAT(@Today,'yyyyMMdd')) AS PRICE_KEY,
+                0 AS VERSION,
+                'C' AS OWNERSHIP_IND
+            FROM P;
+            """,
+            CrRetailPacksExport.BuildFileName,
+            ExportKind.DataTableSemicolon)
     ];
 }
