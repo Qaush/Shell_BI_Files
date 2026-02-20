@@ -4,7 +4,7 @@ internal static class ReportDefinition
 {
     public const string ReportName = "CR Product file";
 
-    public const string ConnectionString = "Data Source=192.168.0.250,20343;Initial Catalog=SHELL;User Id=Kubit;Password=@KIKi34345#$@;";
+    public const string ConnectionString = "Data Source=192.168.0.250,20343;Initial Catalog=SHELL;User Id=Kubit;Password=@KIKi34345#$@;TrustServerCertificate=True;";
 
     public static readonly string Instructions =
         "Raporti duhet të ndjekë renditjen e detyrueshme me 23 kolona: " +

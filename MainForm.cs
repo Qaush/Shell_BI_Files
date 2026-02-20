@@ -95,7 +95,7 @@ public sealed class MainForm : Form
             using var connection = new SqlConnection(ReportDefinition.ConnectionString);
             using var command = new SqlCommand(ReportDefinition.Query, connection)
             {
-                CommandTimeout = 180
+                CommandTimeout = 0
             };
             using var adapter = new SqlDataAdapter(command);
 
