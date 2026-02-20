@@ -34,3 +34,19 @@ dotnet run
 - Shfaq query-n SQL (read-only).
 - Butonat e raporteve e ekzekutojnë query-n përkatës dhe i shfaqin rezultatet në grid.
 - Butoni i eksportit përshtatet sipas raportit aktiv dhe ruan file CSV sipas specifikimit përkatës.
+
+## Pastrim i duplikateve të klasave (.cs)
+
+Skripti `scripts/remove_unreferenced_duplicates.py` gjen file `.cs` me emra të njëjtë dhe fshin vetëm kopjet që **nuk përdoren** nga projektet `.csproj`.
+
+Shembull për rastin tuaj (duke përjashtuar `KubitScripts.csproj` dhe duke preferuar `KuBIT.DAL`):
+
+```bash
+python3 scripts/remove_unreferenced_duplicates.py \
+  --root C:/GIT/Kubit2026 \
+  --exclude-project KubitScripts/KubitScripts.csproj \
+  --preferred-dir KuBIT.DAL \
+  --apply
+```
+
+Pa `--apply`, skripti bën vetëm kontroll (dry-run) dhe liston çfarë do fshinte.
