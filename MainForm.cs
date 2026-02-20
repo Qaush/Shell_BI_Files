@@ -12,6 +12,8 @@ public sealed class MainForm : Form
 
     private ReportDefinition? _selectedReport;
     private Button? _activeReportButton;
+    private Button _exportButton = null!;
+    private bool _canExport;
 
     public MainForm()
     {
@@ -95,6 +97,17 @@ public sealed class MainForm : Form
             reportsButtonsPanel.Controls.Add(reportButton);
         }
 
+        _exportButton = new Button
+        {
+            Dock = DockStyle.Top,
+            Height = 40,
+            Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+            Text = "Eksporto CRProducts CSV",
+            Enabled = false
+        };
+
+        _exportButton.Click += (_, _) => ExportCurrentReport();
+
         _reportTitleLabel = new Label
         {
             Dock = DockStyle.Top,
@@ -126,6 +139,7 @@ public sealed class MainForm : Form
         container.Controls.Add(_statusLabel);
         container.Controls.Add(_instructionLabel);
         container.Controls.Add(_reportTitleLabel);
+        container.Controls.Add(_exportButton);
         container.Controls.Add(reportsButtonsPanel);
         container.Controls.Add(reportsLabel);
 
@@ -137,6 +151,8 @@ public sealed class MainForm : Form
         _selectedReport = report;
         _reportTitleLabel.Text = $"Raporti aktiv: {report.ReportName}";
         _instructionLabel.Text = report.Instructions;
+        _canExport = false;
+        _exportButton.Enabled = false;
 
         if (_activeReportButton is not null)
         {
@@ -178,10 +194,14 @@ public sealed class MainForm : Form
             adapter.Fill(table);
 
             _notesGrid.DataSource = table;
+            _canExport = table.Rows.Count > 0;
+            _exportButton.Enabled = _canExport;
             _statusLabel.Text = $"Raporti u ngarkua me sukses. Rreshta: {table.Rows.Count}.";
         }
         catch (Exception ex)
         {
+            _canExport = false;
+            _exportButton.Enabled = false;
             _statusLabel.Text = "Dështoi ekzekutimi i raportit.";
             MessageBox.Show(
                 $"Ndodhi një gabim gjatë leximit nga databaza:\n{ex.Message}",
@@ -195,21 +215,66 @@ public sealed class MainForm : Form
         }
     }
 
+
+    private void ExportCurrentReport()
+    {
+        if (_notesGrid.DataSource is not DataTable table || table.Columns.Count == 0)
+        {
+            MessageBox.Show("Ngarko fillimisht raportin para eksportit.", "Informacion", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        var lines = table.Rows
+            .Cast<DataRow>()
+            .Select(static row => Convert.ToString(row[0]) ?? string.Empty)
+            .ToList();
+
+        using var saveDialog = new SaveFileDialog
+        {
+            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+            FileName = CrProductsExport.BuildFileName(DateTime.Now),
+            OverwritePrompt = true,
+            AddExtension = true,
+            DefaultExt = "csv",
+            Title = "Ruaj CRProducts sipas RSTS"
+        };
+
+        if (saveDialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            CrProductsExport.ExportLines(lines, saveDialog.FileName);
+            _statusLabel.Text = $"Eksporti u krye me sukses: {Path.GetFileName(saveDialog.FileName)}";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Eksporti dështoi: {ex.Message}", "Gabim eksporti", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
     private void SetReportButtonsEnabled(bool enabled)
     {
         foreach (Control control in Controls)
         {
             ToggleButtons(control, enabled);
         }
+
+        _exportButton.Enabled = enabled && _canExport;
     }
 
-    private static void ToggleButtons(Control parent, bool enabled)
+    private void ToggleButtons(Control parent, bool enabled)
     {
         foreach (Control control in parent.Controls)
         {
             if (control is Button button)
             {
-                button.Enabled = enabled;
+                if (!ReferenceEquals(button, _exportButton))
+                {
+                    button.Enabled = enabled;
+                }
             }
 
             if (control.HasChildren)

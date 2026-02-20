@@ -7,6 +7,7 @@ Aplikacion Windows Forms në C# për ekzekutimin e raportit **CR Product file** 
 - **Emri i raportit:** `CR Product file`
 - Query është vendosur fikse sipas kërkesës dhe respekton renditjen e 23 kolonave të detyrueshme.
 - Në rezultat kthehet kolona `Line` (header + data rows në format CSV me `;`).
+- Ka buton eksporti që ruan file UTF-8 me emër automatik sipas formatit `CRProducts_SSC_BDS_XK_999999_YYYYMMDDThhmmss.csv`.
 
 ## Connection string
 
@@ -31,3 +32,4 @@ dotnet run
 - Shfaq emrin e raportit dhe instruksionin e fushave.
 - Shfaq query-n SQL (read-only).
 - Butoni **Ngarko raportin CR Product file** e ekzekuton query-n dhe i shfaq rezultatet në grid.
+- Butoni **Eksporto CRProducts CSV** verifikon rregullat (23 kolona, pa delimiter në fund, pa `NULL`, decimal me `.`) dhe ruan file sipas specifikimit.
