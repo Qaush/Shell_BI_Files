@@ -119,7 +119,11 @@ internal static class CrProductsExport
 
                 if (descriptionIndexes.Contains(c))
                 {
-                    value = value.Replace(";", string.Empty, StringComparison.Ordinal);
+                    value = value
+                        .Replace(";", string.Empty, StringComparison.Ordinal)
+                        .Replace("\r", " ", StringComparison.Ordinal)
+                        .Replace("\n", " ", StringComparison.Ordinal)
+                        .Trim();
                 }
 
                 columns[c] = quotedIndexes.Contains(c)
