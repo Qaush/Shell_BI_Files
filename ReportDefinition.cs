@@ -117,7 +117,7 @@ internal static class ReportCatalog
             ExportKind.CsvLines),
         new(
             "CR Retail Pack",
-            "Raporti duhet të dorëzohet sipas renditjes së detyrueshme me 28 kolona. Emri i file-it duhet të jetë CRRetailPacks_QBS_XK_999999_YYYY-MM-DD-hh-mm-ss.csv, BUSINESS_UNIT_CODE duhet të jetë KOSOVO - TMLA, dhe RETAIL_PACK_NAME duhet të jetë i njëjtë me PRODUCT_RECEIPT_TEXT.",
+            "Raporti duhet të dorëzohet sipas renditjes së detyrueshme me 28 kolona. Emri i file-it duhet të jetë CRRetailPacks_QBS_XK_999999_YYYY-MM-DD-hh-mm-ss.csv, BUSINESS_UNIT_CODE duhet të jetë XK - TMLA, dhe RETAIL_PACK_NAME duhet të jetë i njëjtë me PRODUCT_RECEIPT_TEXT.",
             """
             /* =========================================================
                CR RETAIL PACK FILE – RSTS Kosovo
@@ -125,7 +125,7 @@ internal static class ReportCatalog
                ========================================================= */
 
             DECLARE @BUID INT = 1000101;
-            DECLARE @BUCODE NVARCHAR(50) = N'KOSOVO - TMLA';
+            DECLARE @BUCODE NVARCHAR(50) = N'XK - TMLA';
             DECLARE @Today DATE = CAST(GETDATE() AS DATE);
 
             ;WITH P AS
