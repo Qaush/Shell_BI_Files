@@ -1,6 +1,7 @@
 using System.Text;
 using System.Data;
 using Microsoft.Data.SqlClient;
+using System.Globalization;
 
 namespace ShellNotesApp;
 
@@ -107,7 +108,7 @@ public sealed class MainForm : Form
             Enabled = false
         };
 
-        _exportButton.Click += (_, _) => ExportCurrentReport();
+        _exportButton.Click += async (_, _) => await ExportCurrentReportAsync();
 
         _reportTitleLabel = new Label
         {
@@ -168,6 +169,11 @@ public sealed class MainForm : Form
             _activeReportButton.BackColor = Color.FromArgb(29, 78, 216);
             _activeReportButton.ForeColor = Color.White;
         }
+
+        // Ndryshon tekstin e butonit sipas llojit të eksportit
+        _exportButton.Text = report.BuildSiteFileName is not null
+            ? $"Gjenero skedarët e {report.ReportName}"
+            : $"Eksporto {report.ReportName} CSV";
     }
 
     private async Task LoadReportAsync()
@@ -186,7 +192,8 @@ public sealed class MainForm : Form
             using var connection = new SqlConnection(ReportCatalog.ConnectionString);
             using var command = new SqlCommand(_selectedReport.Query, connection)
             {
-                CommandTimeout = 0
+                CommandTimeout = 0,
+                CommandType = CommandType.Text
             };
             using var adapter = new SqlDataAdapter(command);
 
@@ -218,7 +225,7 @@ public sealed class MainForm : Form
     }
 
 
-    private void ExportCurrentReport()
+    private async Task ExportCurrentReportAsync()
     {
         if (_selectedReport is null)
         {
@@ -232,6 +239,15 @@ public sealed class MainForm : Form
             return;
         }
 
+        // ── Multi-org export (p.sh. CR Transaction) ──────────────────────────
+        if (_selectedReport.BuildSiteFileName is not null
+            && _selectedReport.OrgListQuery is not null)
+        {
+            await ExportPerSiteAsync(_selectedReport);
+            return;
+        }
+
+        // ── Single-file export ────────────────────────────────────────────────
         using var saveDialog = new SaveFileDialog
         {
             Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
@@ -269,6 +285,166 @@ public sealed class MainForm : Form
         {
             MessageBox.Show($"Eksporti dështoi: {ex.Message}", "Gabim eksporti", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    /// <summary>
+    /// Gjeneron një skedar TXT për çdo organizatë që ka shitje dje.
+    /// Kërkon FolderBrowserDialog dhe ekzekuton query-n për secilin site.
+    /// </summary>
+    private async Task ExportPerSiteAsync(ReportDefinition report)
+    {
+        using var folderDialog = new FolderBrowserDialog
+        {
+            Description = $"Zgjidh dosjen ku do të ruhen skedarët e {report.ReportName}",
+            UseDescriptionForTitle = true
+        };
+
+        if (folderDialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        var folder = folderDialog.SelectedPath;
+        var businessDate = DateTime.Today.AddDays(-1);
+
+        SetReportButtonsEnabled(false);
+        _statusLabel.Text = "Duke marrë listën e organizatave...";
+
+        try
+        {
+            // 1. Merr listën e organizatave me shitje dje
+            var orgs = await GetOrganizationListAsync(report.OrgListQuery!);
+
+            if (orgs.Count == 0)
+            {
+                MessageBox.Show(
+                    $"Nuk u gjet asnjë organizatë me shitje për datën {businessDate:yyyy-MM-dd}.",
+                    "Asnjë të dhënë",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            _statusLabel.Text = $"Duke gjeneruar {orgs.Count} skedarë...";
+
+            int success = 0, empty = 0;
+            var errors = new List<string>(); // (orgId → mesazhi i gabimit)
+
+            // 2. Per-site: ndërtojmë query-n, ekzekutojmë, ruajmë skedarin
+            foreach (var (orgId, siteCode) in orgs)
+            {
+                try
+                {
+                    var query = CrTransactionExport.BuildQuery(orgId);
+                    var lines = await RunQueryAsLinesAsync(query);
+
+                    // Kontrollojmë: nëse ka vetëm 000 + 999 (2 rreshta), nuk ka shitje
+                    if (lines.Count <= 2)
+                    {
+                        empty++;
+                        continue;
+                    }
+
+                    var fileName = report.BuildSiteFileName!(orgId, siteCode, businessDate);
+                    var path = Path.Combine(folder, fileName);
+
+                    CrTransactionExport.ExportLines(lines, path);
+                    success++;
+
+                    _statusLabel.Text = $"Gjeneruar {success}/{orgs.Count - empty}... ({orgId})";
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"Org {orgId}: {ex.Message}");
+                }
+            }
+
+            var summary = $"Gjenerimi u krye: {success} skedarë. " +
+                          (empty        > 0 ? $"Pa shitje: {empty}. "      : "") +
+                          (errors.Count > 0 ? $"Gabime: {errors.Count}."   : "");
+
+            _statusLabel.Text = summary;
+
+            if (errors.Count > 0)
+            {
+                // Tregojmë detajet e gabimeve (max 10 rreshta për të mos mbushur dritaren)
+                var errorDetails = string.Join("\n", errors.Take(10));
+                if (errors.Count > 10)
+                    errorDetails += $"\n... dhe {errors.Count - 10} gabime të tjera.";
+
+                MessageBox.Show(
+                    $"{summary}\n\nDetajet e gabimeve:\n{errorDetails}" +
+                    (success > 0 ? $"\n\nSkedarët e suksesshëm u ruajtën te:\n{folder}" : ""),
+                    "Gjenerim i kryer me gabime",
+                    MessageBoxButtons.OK,
+                    errors.Count == orgs.Count - empty ? MessageBoxIcon.Error : MessageBoxIcon.Warning);
+            }
+            else if (success > 0)
+            {
+                MessageBox.Show(
+                    $"{summary}\n\nDosja: {folder}",
+                    "Gjenerim i kryer",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Gjenerimi dështoi:\n{ex.Message}",
+                "Gabim",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        finally
+        {
+            SetReportButtonsEnabled(true);
+        }
+    }
+
+    /// <summary>Ekzekuton OrgListQuery dhe kthen listë (orgId, siteCode).</summary>
+    private static async Task<List<(int Id, string Code)>> GetOrganizationListAsync(string query)
+    {
+        var result = new List<(int, string)>();
+
+        using var connection = new SqlConnection(ReportCatalog.ConnectionString);
+        using var command    = new SqlCommand(query, connection) { CommandTimeout = 60 };
+
+        await connection.OpenAsync();
+
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var id   = reader.GetInt32(0);
+            var code = reader.GetString(1);
+            result.Add((id, code));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Ekzekuton query-n dhe kthen listën e rreshtave (kolona e parë, si string).
+    /// Përdoret për query-t e tipit CsvLines/PipeLines.
+    /// </summary>
+    private static async Task<List<string>> RunQueryAsLinesAsync(string query)
+    {
+        var lines = new List<string>();
+
+        using var connection = new SqlConnection(ReportCatalog.ConnectionString);
+        using var command    = new SqlCommand(query, connection) { CommandTimeout = 0 };
+        using var adapter    = new SqlDataAdapter(command);
+
+        var table = new DataTable();
+        await connection.OpenAsync();
+        adapter.Fill(table);
+
+        foreach (DataRow row in table.Rows)
+        {
+            lines.Add(Convert.ToString(row[0], CultureInfo.InvariantCulture) ?? string.Empty);
+        }
+
+        return lines;
     }
 
     private static void ExportTableAsSemicolonCsv(DataTable table, string path)

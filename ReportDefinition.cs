@@ -11,11 +11,13 @@ internal sealed record ReportDefinition(
     string Instructions,
     string Query,
     Func<DateTime, string> BuildFileName,
-    ExportKind ExportKind);
+    ExportKind ExportKind,
+    Func<int, string, DateTime, string>? BuildSiteFileName = null,
+    string? OrgListQuery = null);
 
 internal static class ReportCatalog
 {
-    public const string ConnectionString = "Data Source=192.168.0.250,20343;Initial Catalog=SHELL;User Id=Kubit;Password=@KIKi34345#$@;TrustServerCertificate=True;";
+    public const string ConnectionString = "Data Source=192.168.0.250,20343;Initial Catalog=SHELL;User Id=Kubit;Password=@KIKi34345#$@;TrustServerCertificate=True;Encrypt=False;";
 
     public static readonly IReadOnlyList<ReportDefinition> Reports =
     [
@@ -210,6 +212,18 @@ internal static class ReportCatalog
             FROM P;
             """,
             CrRetailPacksExport.BuildFileName,
-            ExportKind.DataTableSemicolon)
+            ExportKind.DataTableSemicolon),
+        new(
+            "CR Transaction",
+            "Raporti gjenerohet për datën e djeshme (YYYYMMDD). " +
+            "Klikimi i 'Gjenero skedarët' kërkon një dosje dhe krijon një skedar .txt " +
+            "për çdo organizatë me shitje dje. " +
+            "Formati: 000 (header) | 500 (tx header) | 501 (item) | 999 (trailer). " +
+            "Emërtimi: POSSales_XK_{orgId}_{timestamp}_{businessDate}.txt",
+            CrTransactionExport.Query,
+            CrTransactionExport.BuildFileName,
+            ExportKind.CsvLines,
+            CrTransactionExport.BuildSiteFileName,
+            CrTransactionExport.OrgListQuery)
     ];
 }
