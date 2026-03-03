@@ -327,7 +327,8 @@ public sealed class MainForm : Form
 
             _statusLabel.Text = $"Duke gjeneruar {orgs.Count} skedarë...";
 
-            int success = 0, failed = 0, empty = 0;
+            int success = 0, empty = 0;
+            var errors = new List<string>(); // (orgId → mesazhi i gabimit)
 
             // 2. Per-site: ndërtojmë query-n, ekzekutojmë, ruajmë skedarin
             foreach (var (orgId, siteCode) in orgs)
@@ -354,18 +355,31 @@ public sealed class MainForm : Form
                 }
                 catch (Exception ex)
                 {
-                    failed++;
-                    System.Diagnostics.Debug.WriteLine($"Export dështoi për org {orgId}: {ex.Message}");
+                    errors.Add($"Org {orgId}: {ex.Message}");
                 }
             }
 
             var summary = $"Gjenerimi u krye: {success} skedarë. " +
-                          (empty  > 0 ? $"Pa shitje: {empty}. " : "") +
-                          (failed > 0 ? $"Gabime: {failed}." : "");
+                          (empty        > 0 ? $"Pa shitje: {empty}. "      : "") +
+                          (errors.Count > 0 ? $"Gabime: {errors.Count}."   : "");
 
             _statusLabel.Text = summary;
 
-            if (success > 0)
+            if (errors.Count > 0)
+            {
+                // Tregojmë detajet e gabimeve (max 10 rreshta për të mos mbushur dritaren)
+                var errorDetails = string.Join("\n", errors.Take(10));
+                if (errors.Count > 10)
+                    errorDetails += $"\n... dhe {errors.Count - 10} gabime të tjera.";
+
+                MessageBox.Show(
+                    $"{summary}\n\nDetajet e gabimeve:\n{errorDetails}" +
+                    (success > 0 ? $"\n\nSkedarët e suksesshëm u ruajtën te:\n{folder}" : ""),
+                    "Gjenerim i kryer me gabime",
+                    MessageBoxButtons.OK,
+                    errors.Count == orgs.Count - empty ? MessageBoxIcon.Error : MessageBoxIcon.Warning);
+            }
+            else if (success > 0)
             {
                 MessageBox.Show(
                     $"{summary}\n\nDosja: {folder}",
