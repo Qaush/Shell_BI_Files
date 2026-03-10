@@ -6,7 +6,7 @@ Aplikacion Windows Forms në C# për ekzekutimin e raporteve **CR Product file**
 
 - **Emrat e raporteve:** `CR Product file`, `CR Retail Pack`
 - Query-t janë vendosur fikse sipas kërkesës.
-- `CR Product file` përdor eksport me linja CSV sipas formatit `CRProducts_SSC_BDS_XK_999999_YYYYMMDDThhmmss.csv`.
+- `CR Product file` përdor eksport me linja CSV sipas formatit `CRProducts_QBS_BDS_XK_999999_YYYY-MM-DD-HH-mm-ss.csv`.
 - `CR Retail Pack` kthen 28 kolona sipas renditjes së detyrueshme dhe eksportohet si CSV me format `CRRetailPacks_QBS_XK_999999_YYYY-MM-DD-hh-mm-ss.csv`.
 - Specifikimi i plotë i kolonave CRProducts ruhet në `CRProducts_RSTS_Spec.md`.
 

@@ -5,14 +5,14 @@ namespace ShellNotesApp;
 
 internal static class CrProductsExport
 {
-    private const string FileNamePrefix = "CRProducts_SSC_BDS";
+    private const string FileNamePrefix = "CRProducts_QBS_BDS";
     private const string MarketCode = "XK";
     private const string EntityCode = "999999";
 
     private static readonly Regex NumericDigitsOrDecimalRegex = new(@"^\d+(\.\d+)?$", RegexOptions.Compiled);
 
     public static string BuildFileName(DateTime timestamp)
-        => $"{FileNamePrefix}_{MarketCode}_{EntityCode}_{timestamp:yyyyMMddTHHmmss}.csv";
+        => $"{FileNamePrefix}_{MarketCode}_{EntityCode}_{timestamp:yyyy-MM-dd-HH-mm-ss}.csv";
 
     public static void ExportLines(IEnumerable<string> lines, string path)
     {

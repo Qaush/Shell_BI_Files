@@ -23,7 +23,7 @@ internal static class ReportCatalog
     [
         new(
             "CR Product file",
-            "Raporti duhet të dorëzohet sipas RSTS: emri i file-it CRProducts_SSC_BDS_XK_999999_YYYYMMDDThhmmss.csv, UTF-8, delimiter ';', pa kolona bosh dhe me 23 kolona të detyrueshme: " +
+            "Raporti duhet të dorëzohet sipas RSTS: emri i file-it CRProducts_QBS_BDS_XK_999999_YYYY-MM-DD-HH24-MM-SS.csv, UTF-8, delimiter ';', pa kolona bosh dhe me 23 kolona të detyrueshme: " +
             "BUID, BUCODE, INVENTORYITEMID, EXTERNALID, ITEMNAME, ITEMSTATUS, ORGUNITOWNERID, ORGUNITOWNERNAME, " +
             "PRODUCTOWNERSHIP, PRODUCTSELLINGTYPE, LOCALSUBCATEGORYID, LOCALSUBCATEGORYCODE, LOCALSUBCATEGORYNAME, " +
             "TAXID, TAXNAME, TAXPERCENT, MANUFACTURERID, MANUFACTURERCODE, MANUFACTURERNAME, BUSINESSUNITGRPID, " +
@@ -62,9 +62,9 @@ internal static class ReportCatalog
                     ISNULL(t.Pershkrimi, 'UNKNOWN') AS TAXNAME,
                     CAST(t.Vlera AS DECIMAL(12,4)) AS TAXPERCENT,
 
-                    0 AS MANUFACTURERID,
-                    'NA' AS MANUFACTURERCODE,
-                    'N/A' AS MANUFACTURERNAME,
+                    CAST(NULL AS INT) AS MANUFACTURERID,
+                    CAST(NULL AS NVARCHAR(255)) AS MANUFACTURERCODE,
+                    CAST(NULL AS NVARCHAR(255)) AS MANUFACTURERNAME,
 
                     0 AS BUSINESSUNITGRPID,
                     'KOSOVO TMLA' AS BUSINESSUNITGRPNAME,
@@ -103,9 +103,9 @@ internal static class ReportCatalog
                         ISNULL(TAXID, 0), ';',
                         '"', ISNULL(TAXNAME, ''), '";',
                         REPLACE(CONVERT(VARCHAR(30), ISNULL(TAXPERCENT, 0)), ',', '.'), ';',
-                        MANUFACTURERID, ';',
-                        '"', MANUFACTURERCODE, '";',
-                        '"', MANUFACTURERNAME, '";',
+                        ISNULL(CONVERT(VARCHAR(20), MANUFACTURERID), ''), ';',
+                        '"', ISNULL(MANUFACTURERCODE, ''), '";',
+                        '"', ISNULL(MANUFACTURERNAME, ''), '";',
                         BUSINESSUNITGRPID, ';',
                         '"', BUSINESSUNITGRPNAME, '";',
                         BRANDCODE, ';',
@@ -172,12 +172,7 @@ internal static class ReportCatalog
                 INNER JOIN dbo.Njesit n ON n.Id = a.NjesiaID
                 INNER JOIN dbo.Cmimorja c ON c.ArtikulliId = a.Id AND c.OrganizataId = 188
                 LEFT JOIN dbo.Tatimet t ON t.Id = a.TatimetID
-                OUTER APPLY
-                (
-                    SELECT TOP 1 Barkodi
-                    FROM dbo.Barkodat
-                    WHERE ArtikulliId = a.Id
-                ) b
+                LEFT JOIN dbo.Barkodat b ON b.ArtikulliId = a.Id
             )
 
             SELECT

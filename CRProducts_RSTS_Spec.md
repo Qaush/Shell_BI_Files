@@ -30,7 +30,7 @@ Ky dokument ruhet për referencë të ardhshme për gjenerimin e file-it **CRPro
 
 ## Rregulla file-i
 
-- Emri: `CRProducts_SSC_BDS_XK_999999_YYYYMMDDThhmmss.csv`
+- Emri: `CRProducts_QBS_BDS_XK_999999_YYYY-MM-DD-HH-mm-ss.csv`
 - Encoding: UTF-8
 - Delimiter: `;`
 - Header + data duhet të kenë saktë 23 kolona
