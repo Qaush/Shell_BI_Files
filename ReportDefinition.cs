@@ -208,6 +208,157 @@ internal static class ReportCatalog
             """,
             CrRetailPacksExport.BuildFileName,
             ExportKind.DataTableSemicolon),
+
+        new(
+            "CR Supplier Pack",
+            "Raporti i furnitorëve eksportohet me 40 kolona sipas query-së së dakorduar. Emri i file-it: CRSupplierPacks_QBS_XK_999999_YYYY-MM-DD-hh-mm-ss.csv.",
+            """
+            SELECT
+
+            --1
+            ISNULL(S.Pershkrimi,'Unspecified')                                   AS SUPPLIERNAME,
+
+            --2
+            ISNULL(S.Id,-1)                                                       AS SUPPLIERID,
+
+            --3
+            CAST(ISNULL(S.Id,-1) AS NVARCHAR(255))                                AS SUPPLIEREXTID,
+
+            --4
+            CAST(a.Id AS NVARCHAR(40)) + '_' +
+            CAST(ISNULL(S.Id,-1) AS NVARCHAR(20)) + '_1000101'                    AS SUPITEMID,
+
+            --5
+            a.Pershkrimi                                                          AS SUPITEMNAME,
+
+            --6
+            'T'                                                                   AS SUPITEMPRIMARY,
+
+            --7
+            NULL                                                                  AS SUPITEMGRPNAME,
+
+            --8
+            CAST(a.Id AS NVARCHAR(40))                                            AS ITEMID,
+
+            --9
+            a.Shifra                                                              AS SUPITEMEXTID,
+
+            --10
+            'a'                                                                   AS SUPITEMSTATUS,
+
+            --11
+            a.Shifra                                                              AS SUPPRODCODE,
+
+            --12
+            NULL                                                                  AS PACKAGE,
+
+            --13
+            ISNULL(c.CmimiFurnizuesRregullt,0)                                    AS PACKAGECOST,
+
+            --14
+            GETDATE()                                                             AS COSTFROMDATE,
+
+            --15
+            '2099-01-01'                                                          AS COSTTODATE,
+
+            --16
+            ISNULL(c.CmimiFurnizuesRregullt,0) / 1                                AS UNITCOST,
+
+            --17
+            0                                                                     AS ALLOWANCE,
+
+            --18
+            ISNULL(c.CmimiFurnizuesRregullt,0)                                    AS NETCOST,
+
+            --19
+            1                                                                     AS UNITSPERPACKAGE,
+
+            --20
+            ISNULL(c.CmimiFurnizuesRregullt,0)                                    AS APPROXUNITCOST,
+
+            --21
+            NULL                                                                  AS INNERPACKS,
+
+            --22
+            NULL                                                                  AS UNITSPERINNPACK,
+
+            --23
+            NULL                                                                  AS INNERPACKCOST,
+
+            --24
+            NULL                                                                  AS APPROXPACKWT,
+
+            --25
+            NULL                                                                  AS APPROXPACKCOST,
+
+            --26
+            'EA'                                                                  AS VARWTUOM,
+
+            --27
+            1000101                                                               AS ORGUNITOWNERID,
+
+            --28
+            'TMLA UG'                                                             AS ORGUNITOWNERNAME,
+
+            --29
+            ISNULL(b.Barkodi,'-1')                                                AS BARCODENUMBER,
+
+            --30
+            NULL                                                                  AS BARCODETYPE,
+
+            --31
+            br.Id                                                                 AS BRANDCODE,
+
+            --32
+            br.Pershkrimi                                                         AS BRANDNAME,
+
+            --33
+            'C'                                                                   AS OWNERSHIPIND,
+
+            --34
+            CAST(CONVERT(VARCHAR(8),GETDATE(),112) AS INT)                        AS COSTKEY,
+
+            --35
+            0                                                                     AS VERSION,
+
+            --36
+            tax.Kategoria                                                         AS TAX_CODE,
+
+            --37
+            tax.Pershkrimi                                                        AS TAX_NAME,
+
+            --38
+            tax.Vlera                                                             AS TAX_PERCENT,
+
+            --39
+            '1000101'                                                             AS COST_LEVEL_CODE,
+
+            --40
+            'TMLA UG'                                                             AS COST_LEVEL_NAME
+
+            FROM dbo.Artikujt a
+
+            INNER JOIN dbo.Tatimet tax
+                   ON tax.Id = a.TatimetID
+
+            LEFT JOIN dbo.Cmimorja c
+                   ON c.ArtikulliId = a.Id
+
+            LEFT JOIN dbo.Barkodat b
+                   ON b.ArtikulliId = a.Id
+
+            LEFT JOIN dbo.Brendet br
+                   ON br.Id = a.BrendId
+
+            LEFT JOIN dbo.MarrveshjaMeFurnitor M
+                   ON M.ArtikulliId = a.Id
+
+            LEFT JOIN dbo.Subjektet S
+                   ON S.Id = M.FurnitoriId;
+            """,
+            CrSupplierPackExport.BuildFileName,
+            ExportKind.DataTableSemicolon),
+
         new(
             "CR Transaction",
             "Raporti gjenerohet për datën e djeshme (YYYYMMDD). " +

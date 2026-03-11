@@ -1,13 +1,14 @@
 # Shell Notes App (Windows Forms, .NET 10)
 
-Aplikacion Windows Forms në C# për ekzekutimin e raporteve **CR Product file** dhe **CR Retail Pack** dhe shfaqjen e rezultateve në `DataGridView`.
+Aplikacion Windows Forms në C# për ekzekutimin e raporteve **CR Product file**, **CR Retail Pack**, **CR Supplier Pack** dhe shfaqjen e rezultateve në `DataGridView`.
 
 ## Raporti
 
-- **Emrat e raporteve:** `CR Product file`, `CR Retail Pack`
+- **Emrat e raporteve:** `CR Product file`, `CR Retail Pack`, `CR Supplier Pack`, `CR Transaction`
 - Query-t janë vendosur fikse sipas kërkesës.
 - `CR Product file` përdor eksport me linja CSV sipas formatit `CRProducts_QBS_BDS_XK_999999_YYYY-MM-DD-HH-mm-ss.csv`.
 - `CR Retail Pack` kthen 28 kolona sipas renditjes së detyrueshme dhe eksportohet si CSV me format `CRRetailPacks_QBS_XK_999999_YYYY-MM-DD-hh-mm-ss.csv`.
+- `CR Supplier Pack` përdor query-n e furnitorëve me 40 kolona dhe eksportohet si CSV me format `CRSupplierPacks_QBS_XK_999999_YYYY-MM-DD-hh-mm-ss.csv`.
 - Specifikimi i plotë i kolonave CRProducts ruhet në `CRProducts_RSTS_Spec.md`.
 
 ## Connection string
